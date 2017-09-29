@@ -48,6 +48,7 @@ static void pothos_zynq_dma_chan_clear(pothos_zynq_dma_chan_t *chan)
  **********************************************************************/
 static void pothos_zynq_dma_chan_register_irq(struct platform_device *pdev, pothos_zynq_dma_chan_t *chan)
 {
+    printk("pothos_zynq_dma_chan_register_irq : Registering IRQ %d \n",chan->irq_number);
     if (chan->irq_number == 0) return;
     chan->irq_registered = devm_request_irq(&pdev->dev, chan->irq_number, pothos_zynq_dma_irq_handler, IRQF_SHARED, "xilinx-dma-controller", chan);
 }
@@ -64,6 +65,8 @@ static void pothos_zynq_dma_chan_unregister_irq(struct platform_device *pdev, po
  **********************************************************************/
 static int pothos_zynq_dma_engine_init(pothos_zynq_dma_engine_t *engine)
 {
+    printk("Initializing DMA engine\n");
+
     struct platform_device *pdev = engine->pdev;
     struct device_node *node = pdev->dev.of_node;
 
@@ -76,11 +79,13 @@ static int pothos_zynq_dma_engine_init(pothos_zynq_dma_engine_t *engine)
     struct resource *res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
     if (res == NULL)
     {
+        printk("Failed to get registers from devidectree\n");
         dev_err(&pdev->dev, "Error getting regs resource from devicetree.'\n");
         dev_err(&pdev->dev, "Example 'reg = <0x40400000 0x10000>;'\n");
         return -1;
     }
     dev_info(&pdev->dev, "Registers at 0x%x\n", res->start);
+    printk("Registers at 0x%x",res->start);
 
     //map the register space
     engine->regs_phys_addr = res->start;
@@ -92,9 +97,15 @@ static int pothos_zynq_dma_engine_init(pothos_zynq_dma_engine_t *engine)
         return -1;
     }
 
+
     //clear the channels
+    printk("Clearing the channels\n");
+
     pothos_zynq_dma_chan_clear(&engine->mm2s_chan);
     pothos_zynq_dma_chan_clear(&engine->s2mm_chan);
+
+    printk("Channels cleared\n");
+
 
     //load register offsets into channels
     engine->mm2s_chan.register_ctrl = (void *)((size_t)engine->regs_virt_addr + XILINX_DMA_MM2S_DMACR_OFFSET);
@@ -115,6 +126,7 @@ static int pothos_zynq_dma_engine_init(pothos_zynq_dma_engine_t *engine)
     }
 
     //register interrupt handlers
+    printk("Registering the IRQs\n");
     pothos_zynq_dma_chan_register_irq(pdev, &engine->mm2s_chan);
     pothos_zynq_dma_chan_register_irq(pdev, &engine->s2mm_chan);
 
@@ -131,6 +143,8 @@ static void pothos_zynq_dma_engine_exit(pothos_zynq_dma_engine_t *engine)
     //unregister interrupt handles
     dev_info(&pdev->dev, "MM2S IRQ[%d] total = %llu\n", engine->mm2s_chan.irq_number, engine->mm2s_chan.irq_count);
     dev_info(&pdev->dev, "S2MM IRQ[%d] total = %llu\n", engine->s2mm_chan.irq_number, engine->s2mm_chan.irq_count);
+    printk("Unregistering the IRQs\n");
+
     pothos_zynq_dma_chan_unregister_irq(pdev, &engine->mm2s_chan);
     pothos_zynq_dma_chan_unregister_irq(pdev, &engine->s2mm_chan);
 
@@ -149,14 +163,17 @@ static int pothos_zynq_dma_module_init(void)
 
     //locate the platform device
     struct device_node *node = NULL;
-    for_each_compatible_node(node, NULL, "pothos,xlnx,axi-dma")
+    for_each_compatible_node(node, NULL, "pothos,xlnx,axi-dma-1.00.a")
     {
+        printk("One module is compatible...\n");
         struct platform_device *pdev = of_find_device_by_node(node);
         if (pdev == NULL) continue;
         module_data.num_engines++;
         module_data.engines = krealloc(module_data.engines, sizeof(pothos_zynq_dma_engine_t)*module_data.num_engines, GFP_KERNEL);
         module_data.engines[module_data.num_engines-1].pdev = pdev;
     }
+
+    printk("There are a total of %d engines available...\n",module_data.num_engines);
 
     //initialize each platform device
     for (size_t i = 0; i < module_data.num_engines; i++)

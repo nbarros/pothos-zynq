@@ -9,8 +9,10 @@
 
 irqreturn_t pothos_zynq_dma_irq_handler(int irq, void *data)
 {
+  //printk("pothos_zynq_dma_irq_handler : Received call on IRQ %d \n",irq);
     pothos_zynq_dma_chan_t *chan = (pothos_zynq_dma_chan_t *)data;
     chan->irq_count++;
+    //printk("pothos_zynq_dma_irq_handler : Counts on this channel %llu \n",chan->irq_count);
 
     //ack the interrupts
     iowrite32(XILINX_DMA_XR_IRQ_ALL_MASK, chan->register_stat);
