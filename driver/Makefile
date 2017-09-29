@@ -5,8 +5,8 @@ CC=$(CROSS_COMPILE)gcc
 
 INCLUDES=-I./ -I../kernel/
 
-#CFLAGS=-std=c99 -O3 $(INCLUDES)
-CFLAGS=-std=gnu99 -O2 $(INCLUDES)
+CFLAGS=-std=gnu99 -O3 $(INCLUDES)
+#CFLAGS=-std=gnu99 -O2 $(INCLUDES)
 
 LDFLAGS=-static
 
@@ -18,7 +18,7 @@ DEPS = \
 
 .PHONY: all
 
-all: loopback_test test_read read_dma_v2 read_dma_v3 read_dma_example
+all: loopback_test test_read read_dma_v2 read_dma_v3 read_dma_example test_dma_read
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
@@ -38,5 +38,8 @@ read_dma_v3: read_dma_v3.o
 read_dma_example: read_dma_example.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
+test_dma_read: test_dma_read.o
+	$(CC) -o $@ $^ $(LDFLAGS)
+
 clean:
-	rm -rf *.o loopback_test test_read read_dma_v2 read_dma_v3 read_dma_example
+	rm -rf *.o loopback_test test_read read_dma_v2 read_dma_v3 read_dma_example test_dma_read
