@@ -18,10 +18,13 @@ DEPS = \
 
 .PHONY: all
 
-all: loopback_test test_read read_dma_v2 read_dma_v3 read_dma_example test_dma_read
+all: loopback_test test_read read_dma_v2 read_dma_v3 read_dma_example test_dma_read debug_timing_system
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
+
+debug_timing_system: debug_timing_system.o
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 loopback_test: loopback_test.o 
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -42,4 +45,4 @@ test_dma_read: test_dma_read.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -rf *.o loopback_test test_read read_dma_v2 read_dma_v3 read_dma_example test_dma_read
+	rm -rf *.o loopback_test test_read read_dma_v2 read_dma_v3 read_dma_example test_dma_read debug_timing_system
